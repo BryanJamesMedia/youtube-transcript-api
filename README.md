@@ -524,6 +524,58 @@ a argument name. For example to get the transcript for the video with the ID `-a
 youtube_transcript_api "\-abc123"
 ```
 
+## Simple FastAPI Web Service
+
+This repo also includes a minimal FastAPI app exposing HTTP endpoints for transcripts.
+
+### Run locally
+
+```
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Then call:
+
+- `GET /health` → `{ "ok": true }`
+- `GET /transcript?videoId=BaW_jenozKc&lang=en&format=json`
+- `GET /transcript?videoId=BaW_jenozKc&lang=en&format=srt`
+- `GET /transcript?videoId=BaW_jenozKc&lang=de,en&format=vtt&preserveFormatting=true`
+
+Parameters:
+
+- `videoId` (required)
+- `lang` (optional, default `en`; supports multiple like `de,en`)
+- `format` (optional: `json` | `srt` | `vtt` | `txt`, default `json`)
+- `preserveFormatting` (optional bool, default `false`)
+
+Notes:
+
+- The service uses the underlying library to list available transcripts, prefers requested languages, and falls back to auto-generated captions when needed.
+- Proxy support: if the `WEBSHARE_USER` and `WEBSHARE_PASS` environment variables are set, the service will route requests through Webshare rotating residential proxies. Optionally restrict countries via `WEBSHARE_COUNTRIES` (comma-separated like `us,de`).
+
+### Deploy to Render
+
+This repository includes a `render.yaml` for a Web Service. On Render:
+
+1. Create a new Web Service from this repo.
+2. Render will run the build command `pip install -r requirements.txt` and start with:
+
+```
+gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+```
+
+3. Set environment variables as needed:
+
+- `WEBSHARE_USER`
+- `WEBSHARE_PASS`
+- `WEBSHARE_COUNTRIES` (optional)
+
+The service runs on Python 3.11 and allows CORS from all origins by default.
+
+### Disclaimer
+
+This library does not require a YouTube API key and can fetch both manually created and auto-generated captions. However, YouTube frequently blocks cloud IPs; consider using rotating residential proxies (e.g., Webshare) in cloud environments. Always respect YouTube's Terms of Service and only fetch captions for content you have rights or permission to access.
+
 ### Working around IP bans using the CLI
 
 If you are running into `ReqestBlocked` or `IpBlocked` errors, because YouTube blocks your IP, you can work around this 

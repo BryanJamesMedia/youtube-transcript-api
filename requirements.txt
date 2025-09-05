@@ -1,0 +1,6 @@
+fastapi>=0.110,<1
+uvicorn[standard]>=0.22,<1
+gunicorn>=21.2,<22
+youtube-transcript-api==0.*
+pydantic>=2,<3
+
